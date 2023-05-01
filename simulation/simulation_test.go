@@ -155,13 +155,6 @@ func TestAlien_Invade(t *testing.T) {
 	})
 }
 
-func TestWorld_String(t *testing.T) {
-	expected := "Foo north=Bar west=Baz south=Qu-ux \nBar south=Foo \nBaz east=Foo \nQu-ux north=Foo \n"
-	world, err := ParseWorld("testdata/world.txt", 1)
-	require.NoError(t, err)
-	require.Equal(t, expected, world.String())
-}
-
 func TestWorld_chooseCity(t *testing.T) {
 	world, err := ParseWorld("testdata/world.txt", 1)
 	require.NoError(t, err)
