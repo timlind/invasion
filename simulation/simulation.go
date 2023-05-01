@@ -237,7 +237,10 @@ func ParseWorld(filename string, numAliens uint64) (*World, error) {
 		cities: make(map[string]*City),
 	}
 
-	file, _ := os.Open(filename)
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
