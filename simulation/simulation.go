@@ -10,9 +10,8 @@ import (
 )
 
 type World struct {
-	activeAliens uint64
-	aliens       map[uint64]*Alien
-	cities       map[string]*City
+	aliens map[uint64]*Alien
+	cities map[string]*City
 }
 
 type City struct {
