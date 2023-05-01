@@ -2,17 +2,29 @@
 
 This is a coding exercise which simulates an alien invasion of a given number of aliens on a world of cities specified by an input file.
 
-# Execution
+## Execution
 
 The executable takes two arguments, the world file, and a uint64 specifying the number of aliens to create.
 ```sh
 go run main.go simulation/testdata/world.txt 2
 ```
 
-# Testing
+## Testing
 
 ```bash
 go test ./... 
+```
+
+## Map File
+
+A map file has the format with one city per line. The first word is the city name, followed by 1-4 directions (north,south,west,east).
+The city and each of the pairs are seperated by a single space, and the directions are seperated from their respective cities with an equal sign.
+
+```
+Foo north=Bar west=Baz south=Qu-ux
+Bar south=Foo
+Baz east=Foo
+Qu-ux north=Foo
 ```
 
 ## API
