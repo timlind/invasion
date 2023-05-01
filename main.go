@@ -17,7 +17,10 @@ func main() {
 		panic(any("Invalid number of aliens " + os.Args[2]))
 	}
 
-	world := simulation.ParseWorld(os.Args[1], numAliens)
+	world, err := simulation.ParseWorld(os.Args[1], numAliens)
+	if err != nil {
+		log.Fatal(err)
+	}
 	world.StartWar()
 	log.Print(world.String())
 }

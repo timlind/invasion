@@ -3,7 +3,6 @@ package v2
 import (
 	"bufio"
 	"context"
-	"log"
 	"math/rand"
 	"os"
 	"strings"
@@ -79,7 +78,7 @@ func (world *World) StartWar() {
 		if city == "" {
 			break
 		}
-		world.Occupy(Hovercraft{
+		world.occupy(Hovercraft{
 			alienId:     alien.id,
 			initialCity: city,
 		})
@@ -102,7 +101,7 @@ func (world *World) StartWar() {
 	for activeAliens > 0 {
 		select {
 		case hovercraft := <-movements:
-			world.Spin(hovercraft)
+			world.spin(hovercraft)
 		case <-done:
 			activeAliens--
 		}
@@ -140,14 +139,14 @@ func (alien Alien) Invade(moves int, movements chan Hovercraft, done chan bool) 
 	done <- true
 }
 
-// Occupy() will make an alien's initial move into a city,
+// occupy() will make an alien's initial move into a city,
 // if there is already an alien there they fight and the city and aliens are destroyed,
 // otherwise the alien occupies the city exclusively.
-func (world *World) Occupy(hovercraft Hovercraft) {
+func (world *World) occupy(hovercraft Hovercraft) {
 	city := world.cities[hovercraft.initialCity]
 	if city.alien != nil {
 		// destroy the city and both aliens
-		world.Fight(hovercraft.initialCity, world.aliens[hovercraft.alienId])
+		world.fight(hovercraft.initialCity, world.aliens[hovercraft.alienId])
 	} else {
 		alien := world.aliens[hovercraft.alienId]
 		alien.city = world.cities[hovercraft.initialCity]
@@ -155,9 +154,9 @@ func (world *World) Occupy(hovercraft Hovercraft) {
 	}
 }
 
-// Fight() will trigger fighting in city between the given alien and the alien currently occupying it.
+// fight() will trigger fighting in city between the given alien and the alien currently occupying it.
 // The aliens will be cancelled, deleted, and the city destroyed along with all roads to it in neighbouring cities.
-func (world *World) Fight(city string, alien *Alien) {
+func (world *World) fight(city string, alien *Alien) {
 	if world.cities[city].alien != nil {
 		// cancel both aliens
 		alien.Cancel()
@@ -179,9 +178,9 @@ func (world *World) Fight(city string, alien *Alien) {
 	}
 }
 
-// Spin() will process the movement of an alien from one city to another.
+// spin() will process the movement of an alien from one city to another.
 // If the alien is trying to move a direction there is no road it will forfeit this move.
-func (world *World) Spin(hovercraft Hovercraft) {
+func (world *World) spin(hovercraft Hovercraft) {
 	alienId := hovercraft.alienId
 	alien, ok := world.aliens[alienId]
 	if !ok {
@@ -206,7 +205,7 @@ func (world *World) Spin(hovercraft Hovercraft) {
 
 	if world.cities[to].alien != nil {
 		// destroy destination
-		world.Fight(to, alien)
+		world.fight(to, alien)
 	} else {
 		// move alien to destination
 		alien.city = world.cities[to]
@@ -226,7 +225,7 @@ func (world *World) String() string {
 	return output
 }
 
-func ParseWorld(filename string, numAliens uint64) *World {
+func ParseWorld(filename string, numAliens uint64) (*World, error) {
 	aliens := make(map[uint64]*Alien, numAliens)
 	for a := uint64(0); a < numAliens; a++ {
 		aliens[a] = NewAlien(a)
@@ -260,8 +259,8 @@ func ParseWorld(filename string, numAliens uint64) *World {
 		world.cities[cityName] = city
 	}
 	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	return world
+	return world, nil
 }

@@ -19,16 +19,18 @@ func Test_StartWar(t *testing.T) {
 	}
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			world := ParseWorld(tc.filename, tc.numAliens)
+			world, err := ParseWorld(tc.filename, tc.numAliens)
+			require.NoError(t, err)
 			world.StartWar()
 			require.Equal(t, tc.numExpectedCities, len(world.cities))
 		})
 	}
 }
 
-func Test_parseWorld(t *testing.T) {
+func Test_ParseWorld(t *testing.T) {
 	t.Run("basic example", func(t *testing.T) {
-		world := ParseWorld("testdata/world.txt", 1)
+		world, err := ParseWorld("testdata/world.txt", 1)
+		require.NoError(t, err)
 		require.Len(t, world.cities, 4)
 		// Foo
 		require.Equal(t, world.cities["Foo"].name, "Foo")
@@ -69,46 +71,51 @@ func TestDirection_String(t *testing.T) {
 	}
 }
 
-func TestWorld_Occupy(t *testing.T) {
+func TestWorld_occupy(t *testing.T) {
 	t.Run("one alien", func(t *testing.T) {
-		world := ParseWorld("testdata/world.txt", 1)
-		world.Occupy(Hovercraft{alienId: 0, initialCity: "Foo"})
+		world, err := ParseWorld("testdata/world.txt", 1)
+		require.NoError(t, err)
+		world.occupy(Hovercraft{alienId: 0, initialCity: "Foo"})
 		require.Equal(t, uint64(0), world.cities["Foo"].alien.id)
 	})
 
 	t.Run("fighting", func(t *testing.T) {
-		world := ParseWorld("testdata/world.txt", 2)
-		world.Occupy(Hovercraft{alienId: 0, initialCity: "Foo"})
+		world, err := ParseWorld("testdata/world.txt", 2)
+		require.NoError(t, err)
+		world.occupy(Hovercraft{alienId: 0, initialCity: "Foo"})
 		require.Equal(t, uint64(0), world.cities["Foo"].alien.id)
-		world.Occupy(Hovercraft{alienId: 1, initialCity: "Foo"})
+		world.occupy(Hovercraft{alienId: 1, initialCity: "Foo"})
 		require.Nil(t, world.cities["Foo"])
 	})
 }
 
-func TestWorld_Fight(t *testing.T) {
-	world := ParseWorld("testdata/world.txt", 2)
-	world.Occupy(Hovercraft{alienId: 0, initialCity: "Foo"})
-	world.Fight("Foo", world.aliens[1])
+func TestWorld_fight(t *testing.T) {
+	world, err := ParseWorld("testdata/world.txt", 2)
+	require.NoError(t, err)
+	world.occupy(Hovercraft{alienId: 0, initialCity: "Foo"})
+	world.fight("Foo", world.aliens[1])
 	require.Equal(t, 0, len(world.aliens))
 	require.Equal(t, 3, len(world.cities))
 	require.Nil(t, world.cities["Foo"])
 	require.Empty(t, world.cities["Bar"].roads["south"])
 }
 
-func TestWorld_Spin(t *testing.T) {
+func TestWorld_spin(t *testing.T) {
 	t.Run("move alien", func(t *testing.T) {
-		world := ParseWorld("testdata/world.txt", 1)
-		world.Occupy(Hovercraft{alienId: 0, initialCity: "Foo"})
-		world.Spin(Hovercraft{alienId: 0, direction: int(NORTH)})
+		world, err := ParseWorld("testdata/world.txt", 1)
+		require.NoError(t, err)
+		world.occupy(Hovercraft{alienId: 0, initialCity: "Foo"})
+		world.spin(Hovercraft{alienId: 0, direction: int(NORTH)})
 		require.Equal(t, uint64(0), world.cities["Bar"].alien.id)
 		require.Equal(t, world.cities["Bar"], world.aliens[0].city)
 	})
 
 	t.Run("destroy destination", func(t *testing.T) {
-		world := ParseWorld("testdata/world.txt", 2)
-		world.Occupy(Hovercraft{alienId: 0, initialCity: "Foo"})
-		world.Occupy(Hovercraft{alienId: 1, initialCity: "Bar"})
-		world.Spin(Hovercraft{alienId: 0, direction: int(NORTH)})
+		world, err := ParseWorld("testdata/world.txt", 2)
+		require.NoError(t, err)
+		world.occupy(Hovercraft{alienId: 0, initialCity: "Foo"})
+		world.occupy(Hovercraft{alienId: 1, initialCity: "Bar"})
+		world.spin(Hovercraft{alienId: 0, direction: int(NORTH)})
 		require.Nil(t, world.cities["Bar"])
 		require.Equal(t, 0, len(world.aliens))
 	})
@@ -116,7 +123,8 @@ func TestWorld_Spin(t *testing.T) {
 
 func TestAlien_Invade(t *testing.T) {
 	t.Run("move twice", func(t *testing.T) {
-		world := ParseWorld("testdata/world.txt", 1)
+		world, err := ParseWorld("testdata/world.txt", 1)
+		require.NoError(t, err)
 
 		movements := make(chan Hovercraft)
 		done := make(chan bool)
@@ -132,7 +140,8 @@ func TestAlien_Invade(t *testing.T) {
 	})
 
 	t.Run("cancel", func(t *testing.T) {
-		world := ParseWorld("testdata/world.txt", 1)
+		world, err := ParseWorld("testdata/world.txt", 1)
+		require.NoError(t, err)
 
 		movements := make(chan Hovercraft)
 		done := make(chan bool)
@@ -141,19 +150,21 @@ func TestAlien_Invade(t *testing.T) {
 		alien.Cancel()
 		go alien.Invade(2, movements, done)
 
-		now := <-done
-		require.True(t, now)
+		cancelled := <-done
+		require.True(t, cancelled)
 	})
 }
 
 func TestWorld_String(t *testing.T) {
 	expected := "Foo north=Bar west=Baz south=Qu-ux \nBar south=Foo \nBaz east=Foo \nQu-ux north=Foo \n"
-	world := ParseWorld("testdata/world.txt", 1)
+	world, err := ParseWorld("testdata/world.txt", 1)
+	require.NoError(t, err)
 	require.Equal(t, expected, world.String())
 }
 
 func TestWorld_chooseCity(t *testing.T) {
-	world := ParseWorld("testdata/world.txt", 1)
+	world, err := ParseWorld("testdata/world.txt", 1)
+	require.NoError(t, err)
 	name := world.chooseCity()
 	_, ok := world.cities[name]
 	require.True(t, ok)
