@@ -6,7 +6,7 @@ This is a coding exercise which simulates an alien invasion of a given number of
 
 The executable takes two arguments, the world file, and a uint64 specifying the number of aliens to create.
 ```sh
-go run main.go testdata/world.txt 2
+go run main.go simulation/testdata/world.txt 2
 ```
 
 # Testing
