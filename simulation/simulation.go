@@ -3,6 +3,7 @@ package v2
 import (
 	"bufio"
 	"context"
+	"log"
 	"math/rand"
 	"os"
 	"strings"
@@ -158,6 +159,7 @@ func (world *World) occupy(hovercraft Hovercraft) {
 // The aliens will be cancelled, deleted, and the city destroyed along with all roads to it in neighbouring cities.
 func (world *World) fight(city string, alien *Alien) {
 	if world.cities[city].alien != nil {
+		log.Printf("%s has been destroyed by aliens %d and %d", city, alien.id, world.cities[city].alien.id)
 		// cancel both aliens
 		alien.Cancel()
 		world.cities[city].alien.Cancel()
